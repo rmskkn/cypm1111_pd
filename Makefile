@@ -39,6 +39,8 @@ TARGET := $(BUILD)/$(PROJECT).elf
 MAPFILE := $(BUILD)/$(PROJECT).map
 LINKER_SCRIPT := $(PROJECT)/bsps/TARGET_APP_PMG1-CY7111/TOOLCHAIN_GCC_ARM/linker.ld
 
+MAKEFILE := $(lastword $(MAKEFILE_LIST))
+
 LDFLAGS := $(CPU_FLAGS)		\
 		-T $(LINKER_SCRIPT)	\
 		-nostartfiles		\
@@ -81,7 +83,6 @@ INCLUDES += -I$(PROJECT)/bsps/TARGET_APP_PMG1-CY7111/config/GeneratedSource \
 CFLAGS += -DCYPM1111_40LQXIT -include mtb_shared/mtb-pdl-cat2/release-v2.19.1/devices/include/pmg1s1_config.h
 
 $(BUILD):
-	@echo "Creating build dir"
 	$(V)mkdir -p $(BUILD)
 
 $(TARGET): $(objs)
@@ -89,12 +90,12 @@ $(TARGET): $(objs)
 	$(V)$(CC) $^ $(LDFLAGS) -o $@
 	$(SIZE) $@
 
-$(BUILD)/%.o: %.c
+$(BUILD)/%.o: %.c $(MAKEFILE)
 	@echo "Compiling $<"
 	$(V)mkdir -p $(dir $@)
 	$(V)$(CC) $(CFLAGS) $(INCLUDES) -MMD -MP -c $< -o $@
 
-$(BUILD)/%.o: %.S
+$(BUILD)/%.o: %.S $(MAKEFILE)
 	@echo "Compiling ASM $<"
 	$(V)mkdir -p $(dir $@)
 	$(V)$(CC) $(CPU_FLAGS) -MMD -MP -c $< -o $@
