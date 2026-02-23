@@ -1,0 +1,9 @@
+[submodule "mtb_shared/mtb-pdl-cat2/release-v2.19.1"]
+	path = mtb_shared/mtb-pdl-cat2/release-v2.19.1
+	url = https://github.com/cypresssemiconductorco/mtb-pdl-cat2
+[submodule "mtb_shared/cmsis/release-v5.8.2"]
+	path = mtb_shared/cmsis/release-v5.8.2
+	url = https://github.com/Infineon/cmsis
+[submodule "mtb_shared/core-lib/release-v1.6.0"]
+	path = mtb_shared/core-lib/release-v1.6.0
+	url = https://github.com/cypresssemiconductorco/core-lib
