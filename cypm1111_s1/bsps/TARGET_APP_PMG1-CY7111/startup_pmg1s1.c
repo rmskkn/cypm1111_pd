@@ -180,6 +180,13 @@ int __low_level_init(void)
 }
 #endif
 
+/* Entry point */
+void _start(void)
+{
+    extern int main(void);
+    main();
+    while (1);
+}
 
 /*----------------------------------------------------------------------------
   Reset Handler called on controller reset
@@ -213,12 +220,8 @@ void Reset_Handler(void)
     __iar_dynamic_initialization();
 #endif
 
-    extern int main(void);
-    main();
-    while (1);
-
     /* Enter PreMain (C library entry point) */
-    //__PROGRAM_START();
+    __PROGRAM_START();
 }
 
 

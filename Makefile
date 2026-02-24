@@ -4,9 +4,8 @@ TOOLCHAIN ?= arm-none-eabi-
 
 CC      := $(TOOLCHAIN)gcc
 AS      := $(TOOLCHAIN)gcc
-OBJCOPY := $(TOOLCHAIN)objcopy
-OBJDUMP := $(TOOLCHAIN)objdump
 SIZE    := $(TOOLCHAIN)size
+CCACHE   ?= ccache
 
 BUILD := build
 
@@ -93,12 +92,12 @@ $(TARGET): $(objs)
 $(BUILD)/%.o: %.c $(MAKEFILE)
 	@echo "Compiling $<"
 	$(V)mkdir -p $(dir $@)
-	$(V)$(CC) $(CFLAGS) $(INCLUDES) -MMD -MP -c $< -o $@
+	$(V)$(CCACHE) $(CC) $(CFLAGS) $(INCLUDES) -MMD -MP -c $< -o $@
 
 $(BUILD)/%.o: %.S $(MAKEFILE)
 	@echo "Compiling ASM $<"
 	$(V)mkdir -p $(dir $@)
-	$(V)$(CC) $(CPU_FLAGS) -MMD -MP -c $< -o $@
+	$(V)$(CCACHE) $(AS) $(CPU_FLAGS) -MMD -MP -c $< -o $@
 
 all: $(TARGET)
 

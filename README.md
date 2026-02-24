@@ -8,12 +8,12 @@ comming from ModusToolbox.
 ### Preprequsites
 Debian based:
 ```bash
-apt install arm-none-eabi-gcc git
+apt install arm-none-eabi-gcc git ccache
 ```
 
 Arch AUR:
 ```bash
-pacman -Syy && pacman -S arm-none-eabi-gcc git
+pacman -Syy && pacman -S arm-none-eabi-gcc git ccache
 ```
 
 ### Compilation
