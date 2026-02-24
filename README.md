@@ -16,6 +16,13 @@ Arch AUR:
 pacman -Syy && pacman -S arm-none-eabi-gcc git ccache
 ```
 
+### Prepare repository
+```bash
+git clone git@github.com:rmskkn/cypm1111_pd.git
+cd cypm1111_pd
+git submodule sync && git submodule update --init --recursive
+```
+
 ### Compilation
 
 ```bash
