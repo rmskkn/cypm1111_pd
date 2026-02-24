@@ -59,8 +59,6 @@ srcs += $(shell find $(PROJECT)/bsps/TARGET_APP_PMG1-CY7111/config/GeneratedSour
 
 # SDK
 PDL_DIR := mtb_shared/mtb-pdl-cat2/release-v2.19.1/drivers/source
-sdk_src := $(shell find $(PDL_DIR) -name '*.c')
-
 # !TODO: separate target for static libs (sdk, pd)
 srcs += $(shell find $(PDL_DIR) -name '*.c')
 srcs_asm :=mtb_shared/mtb-pdl-cat2/release-v2.19.1/drivers/source/COMPONENT_CM0/TOOLCHAIN_GCC_ARM/cy_syslib_gcc.S
