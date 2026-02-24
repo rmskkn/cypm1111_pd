@@ -5,6 +5,8 @@ TOOLCHAIN ?= arm-none-eabi-
 CC      := $(TOOLCHAIN)gcc
 AS      := $(TOOLCHAIN)gcc
 SIZE    := $(TOOLCHAIN)size
+AR      := $(TOOLCHAIN)ar
+
 CCACHE   ?= ccache
 
 BUILD := build
@@ -56,33 +58,39 @@ srcs := $(PROJECT)/main.c	\
 		$(PROJECT)/bsps/TARGET_APP_PMG1-CY7111/startup_pmg1s1.c
 
 srcs += $(shell find $(PROJECT)/bsps/TARGET_APP_PMG1-CY7111/config/GeneratedSource -name '*.c')
-
-# SDK
-PDL_DIR := mtb_shared/mtb-pdl-cat2/release-v2.19.1/drivers/source
-# !TODO: separate target for static libs (sdk, pd)
-srcs += $(shell find $(PDL_DIR) -name '*.c')
-srcs_asm :=mtb_shared/mtb-pdl-cat2/release-v2.19.1/drivers/source/COMPONENT_CM0/TOOLCHAIN_GCC_ARM/cy_syslib_gcc.S
-
-# Subst
 objs := $(srcs:%.c=$(BUILD)/%.o) $(srcs_asm:%.S=$(BUILD)/%.o)
 deps := $(objs:.o=.d)
 
+# SDK
+PDL_DIR  ?=  mtb_shared/mtb-pdl-cat2/release-v2.19.1
+CMSIS_DIR ?= mtb_shared/cmsis/release-v5.8.2
+CORE_DIR ?=  mtb_shared/core-lib/release-v1.6.0
+
+srcs_sdk += $(shell find $(PDL_DIR)/drivers/source -name '*.c') \
+			$(PDL_DIR)/drivers/source/COMPONENT_CM0/TOOLCHAIN_GCC_ARM/cy_syslib_gcc.S
+objs_sdk := $(srcs_sdk:%.c=$(BUILD)/%.o) \
+			$(srcs_sdk:%.S=$(BUILD)/%.o)
+
 INCLUDES := -I$(PROJECT)/bsps/TARGET_APP_PMG1-CY7111 \
-			-Imtb_shared/core-lib/release-v1.6.0/include \
-			-Imtb_shared/mtb-pdl-cat2/release-v2.19.1/drivers/include \
-			-Imtb_shared/mtb-pdl-cat2/release-v2.19.1/devices/include \
-			-Imtb_shared/cmsis/release-v5.8.2/Core/Include
+			-I$(CORE_DIR)/include \
+			-I$(PDL_DIR)/drivers/include \
+			-I$(PDL_DIR)/devices/include \
+			-I$(CMSIS_DIR)/Core/Include
 
 # Target system configs
 INCLUDES += -I$(PROJECT)/bsps/TARGET_APP_PMG1-CY7111/config/GeneratedSource \
 			-I$(PROJECT)/bsps/TARGET_APP_PMG1-CY7111
 
-CFLAGS += -DCYPM1111_40LQXIT -include mtb_shared/mtb-pdl-cat2/release-v2.19.1/devices/include/pmg1s1_config.h
+CFLAGS += -DCYPM1111_40LQXIT
 
 $(BUILD):
 	$(V)mkdir -p $(BUILD)
 
-$(TARGET): $(objs)
+$(BUILD)/libcy.a: $(objs_sdk)
+	@echo "Build sdk static lib"
+	$(V)$(AR) rcs $@ $^
+
+$(TARGET): $(objs) $(BUILD)/libcy.a
 	@echo "Building target: $^"
 	$(V)$(CC) $^ $(LDFLAGS) -o $@
 	$(SIZE) $@
