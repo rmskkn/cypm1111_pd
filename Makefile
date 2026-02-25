@@ -66,10 +66,11 @@ PDL_DIR  ?=  mtb_shared/mtb-pdl-cat2/release-v2.19.1
 CMSIS_DIR ?= mtb_shared/cmsis/release-v5.8.2
 CORE_DIR ?=  mtb_shared/core-lib/release-v1.6.0
 
-srcs_sdk += $(shell find $(PDL_DIR)/drivers/source -name '*.c') \
+srcs_sdk := $(shell find $(PDL_DIR)/drivers/source -name '*.c') \
 			$(PDL_DIR)/drivers/source/COMPONENT_CM0/TOOLCHAIN_GCC_ARM/cy_syslib_gcc.S
 objs_sdk := $(srcs_sdk:%.c=$(BUILD)/%.o) \
 			$(srcs_sdk:%.S=$(BUILD)/%.o)
+deps_sdk := $(objs_sdk:.o=.d)
 
 INCLUDES := -I$(PROJECT)/bsps/TARGET_APP_PMG1-CY7111 \
 			-I$(CORE_DIR)/include \
@@ -111,5 +112,6 @@ clean:
 	@rm -rf $(BUILD)
 
 -include $(deps)
+-include $(sdk_deps)
 
 .PHONY: all clean
