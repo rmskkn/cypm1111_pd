@@ -2,7 +2,7 @@
 
 This project aims to simplify the way of configuring Infineon
 project based on S1 DRP instead of native mtb-based way
-comming from ModusToolbox.
+coming from ModusToolbox.
 
 
 ### Preprequsites
@@ -19,6 +19,11 @@ pacman -Syy && pacman -S arm-none-eabi-gcc \
     git ccache openocd \
     arm-none-eabi-gdb
 ```
+
+Mac:
+Install the [ARM GNU Toolchain](https://developer.arm.com/downloads/-/arm-gnu-toolchain-downloads)
+Make sure it is in your PATH
+brew install ccache openocd arm-none-eabi-gdb
 
 ### Prepare repository
 ```bash
