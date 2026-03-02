@@ -6,24 +6,28 @@ coming from ModusToolbox.
 
 
 ### Preprequsites
-Debian based:
+Debian/Ubuntu:
 ```bash
 apt install arm-none-eabi-gcc git \
-    ccache openocd \
-    arm-none-eabi-gdb
+    ccache \
+    openocd -y
 ```
 
-Arch AUR:
+Arch Linux:
 ```bash
 pacman -Syy && pacman -S arm-none-eabi-gcc \
-    git ccache openocd \
-    arm-none-eabi-gdb
+    git \
+    ccache \
+    openocd
 ```
 
-Mac:
+MacOS:
 Install the [ARM GNU Toolchain](https://developer.arm.com/downloads/-/arm-gnu-toolchain-downloads)
-Make sure it is in your PATH
-brew install ccache openocd arm-none-eabi-gdb
+Make sure it's set in your PATH env.
+
+```bash
+brew install ccache openocd git
+```
 
 ### Prepare repository
 ```bash
