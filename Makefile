@@ -80,17 +80,26 @@ objs_sdk := $(patsubst %.c,$(BUILD)/%.o,$(filter %.c,$(srcs_sdk))) \
 			$(patsubst %.S,$(BUILD)/%.o,$(filter %.S,$(srcs_sdk)))
 deps_sdk := $(objs_sdk:.o=.d)
 
+# Vendor SDK headers are marked -isystem so GCC suppresses warnings that
+# originate in their macros/declarations (e.g. -Wcast-qual in cy_device.h),
+# instead of drowning out warnings from our own code below.
 INCLUDES := -I$(PROJECT)/bsps/TARGET_APP_PMG1-CY7111 \
-			-I$(CORE_DIR)/include \
-			-I$(PDL_DIR)/drivers/include \
-			-I$(PDL_DIR)/devices/include \
-			-I$(CMSIS_DIR)/Core/Include
+			-isystem $(CORE_DIR)/include \
+			-isystem $(PDL_DIR)/drivers/include \
+			-isystem $(PDL_DIR)/devices/include \
+			-isystem $(CMSIS_DIR)/Core/Include
 
 # Target system configs
 INCLUDES += -I$(PROJECT)/bsps/TARGET_APP_PMG1-CY7111/config/GeneratedSource \
 			-I$(PROJECT)/bsps/TARGET_APP_PMG1-CY7111
 
 CFLAGS += -DCYPM1111_40LQXIT
+
+# The vendor SDK sources themselves (not just their headers) trip a few of
+# our stricter warnings with known-benign patterns (e.g. register-access
+# casts). -isystem on their include paths can't help here since the warning
+# originates in their .c files, so relax just those checks for objs_sdk.
+$(objs_sdk): CFLAGS := $(filter-out -Wcast-qual -Wcast-align -Wredundant-decls,$(CFLAGS))
 
 # Object directories, created once as order-only prerequisites instead of
 # forking `mkdir -p` on every single compile.
