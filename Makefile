@@ -13,6 +13,12 @@ BUILD := build
 
 V ?= @
 
+# Build in parallel by default (override with `make -j1` or `JOBS=1`).
+ifeq ($(filter -j%,$(MAKEFLAGS)),)
+JOBS ?= $(shell nproc 2>/dev/null || sysctl -n hw.ncpu 2>/dev/null || echo 1)
+MAKEFLAGS += -j$(JOBS) --output-sync=target
+endif
+
 CPU_FLAGS=-fno-common			\
 			-mcpu=cortex-m0 	\
 			-mthumb				\
@@ -32,6 +38,7 @@ CFLAGS+= $(CPU_FLAGS)				\
 		-Wall -Wextra				\
 		-ffreestanding				\
 		-fno-builtin				\
+		-pipe						\
 		-Os
 
 PROJECT := cypm1111_s1
@@ -58,7 +65,8 @@ srcs := $(PROJECT)/main.c	\
 		$(PROJECT)/bsps/TARGET_APP_PMG1-CY7111/startup_pmg1s1.c
 
 srcs += $(shell find $(PROJECT)/bsps/TARGET_APP_PMG1-CY7111/config/GeneratedSource -name '*.c')
-objs := $(srcs:%.c=$(BUILD)/%.o) $(srcs_asm:%.S=$(BUILD)/%.o)
+objs := $(patsubst %.c,$(BUILD)/%.o,$(filter %.c,$(srcs))) \
+		$(patsubst %.S,$(BUILD)/%.o,$(filter %.S,$(srcs)))
 deps := $(objs:.o=.d)
 
 # SDK
@@ -68,8 +76,8 @@ CORE_DIR ?=  mtb_shared/core-lib/release-v1.6.0
 
 srcs_sdk := $(shell find $(PDL_DIR)/drivers/source -name '*.c') \
 			$(PDL_DIR)/drivers/source/COMPONENT_CM0/TOOLCHAIN_GCC_ARM/cy_syslib_gcc.S
-objs_sdk := $(srcs_sdk:%.c=$(BUILD)/%.o) \
-			$(srcs_sdk:%.S=$(BUILD)/%.o)
+objs_sdk := $(patsubst %.c,$(BUILD)/%.o,$(filter %.c,$(srcs_sdk))) \
+			$(patsubst %.S,$(BUILD)/%.o,$(filter %.S,$(srcs_sdk)))
 deps_sdk := $(objs_sdk:.o=.d)
 
 INCLUDES := -I$(PROJECT)/bsps/TARGET_APP_PMG1-CY7111 \
@@ -84,8 +92,12 @@ INCLUDES += -I$(PROJECT)/bsps/TARGET_APP_PMG1-CY7111/config/GeneratedSource \
 
 CFLAGS += -DCYPM1111_40LQXIT
 
-$(BUILD):
-	$(V)mkdir -p $(BUILD)
+# Object directories, created once as order-only prerequisites instead of
+# forking `mkdir -p` on every single compile.
+objdirs := $(sort $(dir $(objs) $(objs_sdk)))
+
+$(objdirs):
+	$(V)mkdir -p $@
 
 $(BUILD)/libcy.a: $(objs_sdk)
 	@echo "Build sdk static lib"
@@ -96,14 +108,12 @@ $(TARGET): $(objs) $(BUILD)/libcy.a
 	$(V)$(CC) $^ $(LDFLAGS) -o $@
 	$(SIZE) $@
 
-$(BUILD)/%.o: %.c $(MAKEFILE)
+$(BUILD)/%.o: %.c $(MAKEFILE) | $(objdirs)
 	@echo "Compiling $<"
-	$(V)mkdir -p $(dir $@)
 	$(V)$(CCACHE) $(CC) $(CFLAGS) $(INCLUDES) -MMD -MP -c $< -o $@
 
-$(BUILD)/%.o: %.S $(MAKEFILE)
+$(BUILD)/%.o: %.S $(MAKEFILE) | $(objdirs)
 	@echo "Compiling ASM $<"
-	$(V)mkdir -p $(dir $@)
 	$(V)$(CCACHE) $(AS) $(CPU_FLAGS) -MMD -MP -c $< -o $@
 
 all: $(TARGET)
@@ -112,6 +122,6 @@ clean:
 	@rm -rf $(BUILD)
 
 -include $(deps)
--include $(sdk_deps)
+-include $(deps_sdk)
 
 .PHONY: all clean
