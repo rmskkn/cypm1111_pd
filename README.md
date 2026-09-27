@@ -1,80 +1,116 @@
-## Initial PD S1 DRP project skeleton
+# CYPM1111 PD FW
 
-This project aims to simplify the way of configuring Infineon
-project based on S1 DRP instead of native mtb-based way
-coming from ModusToolbox.
+[![Build](https://img.shields.io/badge/build-Makefile-blue)](Makefile)
+[![Toolchain](https://img.shields.io/badge/toolchain-arm--none--eabi--gcc-informational)](#prerequisites)
+[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](#contributing)
 
+A minimal, ModusToolbox-free firmware build for the Infineon CYPM1111-40LQXI USB-PD controller, built with plain `make` and `arm-none-eabi-gcc`.
 
-### Preprequsites
-Debian/Ubuntu:
+## Why
+
+Infineon's official workflow for this chip requires the full ModusToolbox IDE/toolchain. This project provides a lightweight alternative: a hand-written `Makefile` that drives GCC directly against the vendor PDL, CMSIS, and core-lib sources, so you can build, flash, and debug without installing ModusToolbox.
+
+## Contents
+
+- [Prerequisites](#prerequisites)
+- [Getting the source](#getting-the-source)
+- [Building](#building)
+- [Flashing and debugging](#flashing-and-debugging)
+- [Contributing](#contributing)
+- [License](#license)
+
+## Prerequisites
+
+You need an `arm-none-eabi-gcc` toolchain, Git, and (optionally) `ccache` to speed up rebuilds.
+
+**Debian/Ubuntu**
 ```bash
-apt install arm-none-eabi-gcc git \
-    ccache \
-    openocd -y
+apt install arm-none-eabi-gcc git ccache openocd -y
 ```
 
-Arch Linux:
+**Arch Linux**
 ```bash
-pacman -Syy && pacman -S arm-none-eabi-gcc \
-    git \
-    ccache \
-    openocd
+pacman -Syy && pacman -S arm-none-eabi-gcc git ccache openocd
 ```
 
-MacOS:
-Install the [ARM GNU Toolchain](https://developer.arm.com/downloads/-/arm-gnu-toolchain-downloads)
-Make sure it's set in your PATH env.
-
+**macOS**
 ```bash
 brew install ccache openocd git
 ```
+Then install the [ARM GNU Toolchain](https://developer.arm.com/downloads/-/arm-gnu-toolchain-downloads) and make sure it's on your `PATH`.
 
-### Prepare repository
+## Getting the source
+
+This repository uses Git submodules for the vendor SDK (CMSIS, PDL, core-lib):
+
 ```bash
 git clone git@github.com:rmskkn/cypm1111_pd.git
 cd cypm1111_pd
 git submodule sync && git submodule update --init --recursive
 ```
 
-### Compilation
+## Building
 
 ```bash
 make
 ```
 
-### Debugging
+The build is parallelized automatically (based on available CPU cores) and produces `build/cypm1111.elf`.
 
-1. Invoke OpenOCD on builtin onboard debugger on the host;
-Unfortunately, Infineon has not published all required changes to upstream openocd.
-We need to download ModusToolboxProgTools in https://softwaretools.infineon.com/tools/com.ifx.tb.tool.modustoolboxprogtools
-and install it on host. This is only debian package.
-For Arch-based systems we need to use https://aur.archlinux.org/modustoolbox-progtools.git and `makepkg -si` to bundle it.
-
-Once you connected your onboard debugger J1 and target USB-C J10, we can invoke OpenOCD:
 ```bash
-/opt/ModusToolboxProgtools-1.6/openocd/bin/openocd -s /opt/ModusToolboxProgtools-1.6/mtb-programmer/scripts -c 'set APP_PATH "/opt/ModusToolboxProgtools-1.6/mtb-programmer"' -c 'set SERIAL_NUM "091509E8021D2400"' -c 'set OOCD_REL_PATH "./../openocd"' -f cyp_dirs.cfg -c 'set TRANSPORT swd' -g -c 'set BAUDRATE "0"' -c 'set RESETTYPE soft' -c 'set TARGET_CONFIG "cpu_pmg1.cfg"' -c 'set PSOC4_USE_ACQUIRE 1' -c 'tcl_port disabled' -f probe_kitprog3.cfg -c 'adapter speed 2000' -d2
-
+make clean
 ```
 
-You will see info listing from openocd:
+removes build artifacts.
+
+## Flashing and debugging
+
+### 1. Start OpenOCD
+
+Debugging uses the onboard debugger. Infineon has not upstreamed all the OpenOCD changes it requires, so you'll need `ModusToolboxProgTools`:
+
+- Debian: install directly from [Infineon's software tools portal](https://softwaretools.infineon.com/tools/com.ifx.tb.tool.modustoolboxprogtools).
+- Arch-based systems: build it from the [AUR package](https://aur.archlinux.org/modustoolbox-progtools.git) with `makepkg -si`.
+
+With the onboard debugger (J1) and target USB-C (J10) connected, launch OpenOCD:
 
 ```bash
+/opt/ModusToolboxProgtools-1.6/openocd/bin/openocd \
+  -s /opt/ModusToolboxProgtools-1.6/mtb-programmer/scripts \
+  -c 'set APP_PATH "/opt/ModusToolboxProgtools-1.6/mtb-programmer"' \
+  -c 'set SERIAL_NUM "091509E8021D2400"' \
+  -c 'set OOCD_REL_PATH "./../openocd"' \
+  -f cyp_dirs.cfg \
+  -c 'set TRANSPORT swd' \
+  -g \
+  -c 'set BAUDRATE "0"' \
+  -c 'set RESETTYPE soft' \
+  -c 'set TARGET_CONFIG "cpu_pmg1.cfg"' \
+  -c 'set PSOC4_USE_ACQUIRE 1' \
+  -c 'tcl_port disabled' \
+  -f probe_kitprog3.cfg \
+  -c 'adapter speed 2000' \
+  -d2
+```
+
+A successful connection looks like:
+
+```
 Info : [psoc4.cpu] Examination succeed
 Info : gdb port disabled
 Info : starting gdb server for psoc4.cpu on 3333
 Info : Listening on port 3333 for gdb connections
-
 ```
 
-2. Run gdb:
+### 2. Connect with GDB
 
 ```bash
 arm-none-eabi-gdb ./build/cypm1111.elf -x 'target remote :3333'
 ```
-Inside the gdb session, use `load` command to upload fw to target and `c` to run the fw.
 
-Example of successful transfer:
-```bash
+Inside the GDB session, run `load` to upload the firmware and `c` to start execution:
+
+```
 (gdb) load
 Loading section .text, size 0x201a lma 0x0
 Loading section .copy.table, size 0xe lma 0x201a
@@ -84,4 +120,10 @@ Start address 0x000001de, load size 8284
 Transfer rate: 14 KB/sec, 2071 bytes/write.
 ```
 
-### Additional proposals, ideas and PR's are welcome!
+## Contributing
+
+Ideas, proposals, and pull requests are welcome. Please open an issue to discuss significant changes before submitting a PR.
+
+## License
+
+No license has been specified yet for this project.
