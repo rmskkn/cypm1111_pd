@@ -2,6 +2,7 @@
 
 [![Build](https://img.shields.io/badge/build-Makefile-blue)](Makefile)
 [![Toolchain](https://img.shields.io/badge/toolchain-arm--none--eabi--gcc-informational)](#prerequisites)
+[![License](https://img.shields.io/badge/license-Apache--2.0-green.svg)](LICENSE)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](#contributing)
 
 A minimal, ModusToolbox-free firmware build for the Infineon CYPM1111-40LQXI USB-PD controller, built with plain `make` and `arm-none-eabi-gcc`.
@@ -18,6 +19,7 @@ Infineon's official workflow for this chip requires the full ModusToolbox IDE/to
 - [Flashing and debugging](#flashing-and-debugging)
 - [Contributing](#contributing)
 - [License](#license)
+- [Third-party notices](#third-party-notices)
 
 ## Prerequisites
 
@@ -126,4 +128,20 @@ Ideas, proposals, and pull requests are welcome. Please open an issue to discuss
 
 ## License
 
-No license has been specified yet for this project.
+This project is licensed under the [Apache License 2.0](LICENSE).
+
+## Third-party notices
+
+Firmware is built against Infineon's vendor SDKs, pulled in as git submodules under
+`mtb_shared/`:
+
+- [`mtb-pdl-cat2`](https://github.com/Infineon/mtb-pdl-cat2) (Peripheral Driver Library) — Apache-2.0
+- [`cmsis`](https://github.com/Infineon/cmsis) (CMSIS-Core) — Apache-2.0
+- [`core-lib`](https://github.com/Infineon/core-lib) — Apache-2.0
+
+The board support files vendored directly under `cypm1111_s1/bsps/` originate from the
+same Infineon BSP and are likewise Apache-2.0 licensed; see the header of each file.
+
+Debugging relies on Infineon's proprietary `ModusToolboxProgTools`, which is installed
+separately by the user (see [Flashing and debugging](#flashing-and-debugging)) and is
+not redistributed as part of this repository.
